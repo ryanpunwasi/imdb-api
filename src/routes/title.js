@@ -1,12 +1,15 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import DomParser from "dom-parser";
 import { decode as entityDecoder } from "html-entities";
 import seriesFetcher, { parseEpisodes } from "../helpers/seriesFetcher";
 import apiRequestRawHtml from "../helpers/apiRequestRawHtml";
 import parseMoreInfo from "../helpers/parseMoreInfo";
-const title = new Hono();
 
-title.get("/:id", async (c) => {
+const title = new Hono();
+title.use(cors({ origin: "*" }));
+
+title.get("/:id", async c => {
   const id = c.req.param("id");
 
   try {
@@ -63,7 +66,7 @@ title.get("/:id", async (c) => {
 
     // genre
     response.genre =
-      schema.genre?.map((e) => entityDecoder(e, { level: "html5" })) ?? [];
+      schema.genre?.map(e => entityDecoder(e, { level: "html5" })) ?? [];
 
     // Relesde detail, laguages, fliming locations
     response.releaseDetailed = moreDetails.releaseDetailed;
@@ -78,7 +81,7 @@ title.get("/:id", async (c) => {
 
     // actors
     try {
-      response.actors = schema.actor.map((e) =>
+      response.actors = schema.actor.map(e =>
         entityDecoder(e.name, { level: "html5" })
       );
     } catch (_) {
@@ -86,7 +89,7 @@ title.get("/:id", async (c) => {
     }
     // director
     try {
-      response.directors = schema.director.map((e) =>
+      response.directors = schema.director.map(e =>
         entityDecoder(e.name, { level: "html5" })
       );
     } catch (_) {
@@ -98,10 +101,10 @@ title.get("/:id", async (c) => {
       let top_credits = getNode(dom, "div", "title-pc-expanded-section")
         .firstChild.firstChild;
 
-      response.top_credits = top_credits.childNodes.map((e) => {
+      response.top_credits = top_credits.childNodes.map(e => {
         return {
           name: e.firstChild.textContent,
-          value: e.childNodes[1].firstChild.childNodes.map((e) =>
+          value: e.childNodes[1].firstChild.childNodes.map(e =>
             entityDecoder(e.textContent, { level: "html5" })
           ),
         };
@@ -127,7 +130,7 @@ title.get("/:id", async (c) => {
   }
 });
 
-title.get("/:id/season/:seasonId", async (c) => {
+title.get("/:id/season/:seasonId", async c => {
   const id = c.req.param("id");
   const seasonId = c.req.param("seasonId");
 
@@ -161,5 +164,5 @@ export default title;
 function getNode(dom, tag, id) {
   return dom
     .getElementsByTagName(tag)
-    .find((e) => e.attributes.find((e) => e.value === id));
+    .find(e => e.attributes.find(e => e.value === id));
 }
